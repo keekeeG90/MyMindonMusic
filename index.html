@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<!-- v5 -->
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyMindonMusic</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg: #152238;
+            --text: #FAFAFA;
+            --accent-pink: #FF006E;
+            --accent-cyan: #00F5FF;
+            --accent-yellow: #FFD60A;
+            --accent-purple: #7209B7;
+            --gray: #2A3749;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: #0F1A2A;
+            color: var(--text);
+            line-height: 1.8;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 2rem auto;
+            padding: 4rem 3rem;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            background: var(--bg);
+        }
+
+        header {
+            margin-bottom: 5rem;
+            text-align: center;
+            position: relative;
+            padding-top: 3rem;
+        }
+
+        h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            animation: slideDown 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            z-index: 1;
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text);
+            opacity: 0.9;
+            font-weight: 400;
+            font-family: 'Caveat', cursive;
+            text-transform: none;
+            letter-spacing: 0.02em;
+            animation: fadeIn 0.8s ease 0.2s backwards;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            padding: 0.7rem 1.3rem;
+            display: inline-block;
+            position: absolute;
+            top: 0;
+            right: 12%;
+        }
+
+        .subtitle::before {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 20%;
+            width: 14px;
+            height: 14px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            margin-top: 6px;
+        }
+
+        .subtitle::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 10%;
+            width: 22px;
+            height: 22px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            margin-top: 24px;
+        }
+
+        h1::before {
+            content: '';
+            position: absolute;
+            top: -20px;
+            right: 22%;
+            width: 30px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            z-index: -1;
+        }
+
+        .main-nav {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 4rem;
+            animation: fadeIn 0.8s ease 0.3s backwards;
+            justify-content: center;
+        }
+
+        .nav-button {
+            padding: 0.7rem 1.5rem;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 700;
+            font-size: 0.8rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: #1F2D42;
+            color: var(--text);
+            cursor: pointer;
+            border-radius: 100px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 0;
+        }
+
+        .nav-button span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .nav-button:hover::before {
+            opacity: 1;
+        }
+
+        .nav-button:hover {
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255, 0, 110, 0.25);
+        }
+
+        .nav-button.active {
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+            color: white;
+            box-shadow: 0 4px 16px rgba(255, 0, 110, 0.3);
+        }
+
+        .nav-button.import {
+            background: var(--accent-cyan);
+            color: var(--text);
+        }
+
+        .nav-button.import:hover {
+            box-shadow: 0 8px 24px rgba(0, 245, 255, 0.3);
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        .search-section {
+            background: #1F2D42;
+            border-radius: 24px;
+            padding: 1.2rem;
+            box-shadow: 0 2px 24px var(--shadow);
+            margin-bottom: 3rem;
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.4s backwards;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .search-bar {
+            width: 45%;
+            max-width: 400px;
+            margin: 0 auto;
+            padding: 1.2rem 1.5rem;
+            font-size: 1rem;
+            font-family: 'DM Sans', sans-serif;
+            border: 3px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            background: #0A1628;
+            color: var(--text);
+            transition: all 0.3s ease;
+            display: block;
+        }
+
+        .search-bar:focus {
+            outline: none;
+            border-color: var(--accent-pink);
+            box-shadow: 0 0 0 4px rgba(255, 0, 110, 0.1);
+        }
+
+        .filter-tabs {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tab {
+            padding: 0.6rem 1.5rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            background: #1F2D42;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 100px;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 0.05em;
+        }
+
+        .tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--accent-cyan);
+            transform: translateY(-1px);
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+            border-color: transparent;
+            color: white;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 2rem;
+            animation: fadeIn 0.6s ease;
+        }
+
+        .card {
+            background: #1F2D42;
+            border-radius: 20px;
+            padding: 2.5rem;
+            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 16px var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--accent-pink), var(--accent-purple), var(--accent-cyan));
+            transform: scaleY(0);
+            transform-origin: top;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .card:hover::before {
+            transform: scaleY(1);
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-type {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--accent-pink);
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--text);
+            line-height: 1.2;
+        }
+
+        .card-meta {
+            font-size: 0.85rem;
+            color: var(--text);
+            opacity: 0.4;
+            margin-bottom: 1.2rem;
+            font-weight: 500;
+        }
+
+        .card-description {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--text);
+            opacity: 0.7;
+        }
+
+        .blog-post-full {
+            background: #1F2D42;
+            border-radius: 24px;
+            padding: 4rem;
+            margin-bottom: 3rem;
+            animation: slideUp 0.6s ease-out;
+            box-shadow: 0 2px 24px var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .blog-post-full h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 3.5rem;
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 2rem;
+            line-height: 1.1;
+        }
+
+        .blog-meta {
+            display: flex;
+            gap: 2rem;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 2px solid var(--gray);
+        }
+
+        .blog-meta-item {
+            font-size: 0.85rem;
+            opacity: 0.5;
+            font-weight: 500;
+        }
+
+        .blog-content {
+            font-size: 1.1rem;
+            line-height: 1.9;
+        }
+
+        .blog-content h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 2rem;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            color: var(--text);
+        }
+
+        .blog-content p {
+            margin-bottom: 1.5rem;
+        }
+
+        .blog-content strong {
+            color: var(--accent-pink);
+            font-weight: 700;
+        }
+
+        .blog-content em {
+            font-style: italic;
+            color: var(--accent-purple);
+        }
+
+        .back-button {
+            display: inline-block;
+            padding: 1rem 2rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 100px;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.05em;
+            margin-bottom: 2rem;
+        }
+
+        .back-button:hover {
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+            border-color: transparent;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255, 0, 110, 0.3);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 6rem 2rem;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .empty-state h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.5rem;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            color: var(--text);
+            opacity: 0.4;
+            font-size: 1rem;
+        }
+
+        .add-button {
+            position: fixed;
+            bottom: 3rem;
+            right: 3rem;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 8px 32px rgba(255, 0, 110, 0.4);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 100;
+        }
+
+        .add-button:hover {
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: 0 12px 48px rgba(255, 0, 110, 0.5);
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .modal {
+            background: #1F2D42;
+            border-radius: 24px;
+            padding: 3rem;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .modal h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.1em;
+            opacity: 0.6;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 1rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 1rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            background: #0A1628;
+            color: var(--text);
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--accent-pink);
+            box-shadow: 0 0 0 4px rgba(255, 0, 110, 0.2);
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .form-group textarea.tall {
+            min-height: 300px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 1rem 2rem;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 700;
+            font-size: 0.9rem;
+            border: none;
+            border-radius: 100px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255, 0, 110, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .formatting-help {
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+
+        .formatting-help strong {
+            color: var(--accent-pink);
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 0.4rem 1rem;
+            background: var(--accent-yellow);
+            color: var(--text);
+            border-radius: 100px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .comments-section {
+            margin-top: 4rem;
+            padding-top: 3rem;
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .comments-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            color: var(--text);
+        }
+
+        .comment-form {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .comment-input-group {
+            margin-bottom: 1rem;
+        }
+
+        .comment-input-group label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            opacity: 0.7;
+        }
+
+        .comment-input {
+            width: 100%;
+            padding: 0.8rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            background: #0A1628;
+            color: var(--text);
+        }
+
+        .comment-textarea {
+            width: 100%;
+            padding: 0.8rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            background: #0A1628;
+            color: var(--text);
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .comment-submit {
+            padding: 0.8rem 2rem;
+            background: linear-gradient(135deg, var(--accent-pink), var(--accent-purple));
+            color: white;
+            border: none;
+            border-radius: 100px;
+            font-family: 'DM Sans', sans-serif;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+
+        .comment-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255, 0, 110, 0.4);
+        }
+
+        .comments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .comment {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--accent-cyan);
+        }
+
+        .comment-author {
+            font-weight: 700;
+            color: var(--accent-cyan);
+            margin-bottom: 0.5rem;
+        }
+
+        .comment-date {
+            font-size: 0.8rem;
+            opacity: 0.5;
+            margin-bottom: 0.8rem;
+        }
+
+        .comment-text {
+            line-height: 1.7;
+        }
+
+        .import-result-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .import-result-card h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.8rem;
+            color: var(--text);
+            margin-bottom: 1rem;
+        }
+
+        .import-preview {
+            background: #0A1628;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .import-field {
+            margin-bottom: 1rem;
+        }
+
+        .import-label {
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            margin-bottom: 0.3rem;
+            display: block;
+            opacity: 0.6;
+        }
+
+        .import-input {
+            width: 100%;
+            padding: 0.8rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text);
+        }
+
+        .import-textarea {
+            width: 100%;
+            padding: 0.8rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.95rem;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            min-height: 80px;
+            resize: vertical;
+            background: rgba(0, 0, 0, 0.3);
+            color: var(--text);
+        }
+
+        .import-status {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: 500;
+        }
+
+        .import-success {
+            background: rgba(0, 245, 255, 0.1);
+            border: 2px solid var(--accent-cyan);
+            color: var(--text);
+        }
+
+        .import-error {
+            background: rgba(255, 0, 110, 0.1);
+            border: 2px solid var(--accent-pink);
+            color: var(--accent-pink);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes modalSlide {
+            from {
+                opacity: 0;
+                transform: translateY(40px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2rem; }
+            .container { padding: 3rem 2rem; }
+            .results-grid { grid-template-columns: 1fr; }
+            header { padding-top: 8rem; }
+            .subtitle { 
+                font-size: 0.75rem;
+                padding: 0.6rem 1rem;
+                position: static;
+                display: block;
+                margin-bottom: 2rem;
+            }
+            .subtitle::before,
+            .subtitle::after,
+            h1::before {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const SUPABASE_URL = 'https://envivdhjiltvjhcnoxhi.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVudml2ZGhqaWx0dmpoY25veGhpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzMzI4NTksImV4cCI6MjA4NTkwODg1OX0.XYUbUKT9FupB4uKrTa5LlPkKYeCfMI_dbk2eHjcTl2Q';
+        
+        const DEMO_MODE = !SUPABASE_URL.startsWith('https://');
+
+        function MusicHistoryApp() {
+            const [currentView, setCurrentView] = useState('database');
+            const [selectedPost, setSelectedPost] = useState(null);
+            const [searchQuery, setSearchQuery] = useState('');
+            const [activeFilter, setActiveFilter] = useState('all');
+            const [items, setItems] = useState([]);
+            const [posts, setPosts] = useState([]);
+            const [showModal, setShowModal] = useState(false);
+            const [showImportModal, setShowImportModal] = useState(false);
+            const [modalType, setModalType] = useState('artist');
+            const [supabase, setSupabase] = useState(null);
+            const [importSearch, setImportSearch] = useState('');
+            const [importResults, setImportResults] = useState([]);
+            const [importing, setImporting] = useState(false);
+            const [comments, setComments] = useState([]);
+            const [newComment, setNewComment] = useState({ name: '', comment: '' });
+            const [editingPost, setEditingPost] = useState(null);
+            const [submitAction, setSubmitAction] = useState('published');
+            const [adminView, setAdminView] = useState(false);
+            const [isAdmin, setIsAdmin] = useState(false);
+            const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+            const [passwordInput, setPasswordInput] = useState('');
+            const [passwordError, setPasswordError] = useState(false);
+
+            const demoData = [{
+                id: 1, type: 'artist', name: 'The Beatles', origin: 'Liverpool, England',
+                formed_date: '1960', genre: 'Rock',
+                description: 'The most influential band in the history of rock music.'
+            }];
+
+            const demoPosts = [{
+                id: 1, title: 'The Evolution of Jazz', slug: 'evolution-of-jazz',
+                category: 'History', content: 'Jazz has come a long way...',
+                created_at: new Date().toISOString(), author: 'You'
+            }];
+
+            useEffect(() => {
+                if (!DEMO_MODE) {
+                    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                    setSupabase(supabaseClient);
+                    loadData(supabaseClient);
+                    loadPosts(supabaseClient);
+                } else {
+                    setItems(demoData);
+                    setPosts(demoPosts);
+                }
+            }, []);
+
+            async function loadData(client) {
+                try {
+                    const { data: artists } = await client.from('artists').select('*');
+                    const { data: albums } = await client.from('albums').select('*');
+                    const { data: genres } = await client.from('genres').select('*');
+                    const combined = [
+                        ...(artists || []).map(a => ({ ...a, type: 'artist' })),
+                        ...(albums || []).map(a => ({ ...a, type: 'album' })),
+                        ...(genres || []).map(g => ({ ...g, type: 'genre' }))
+                    ];
+                    setItems(combined);
+                } catch (error) {
+                    console.error('Error loading data:', error);
+                }
+            }
+
+            async function loadPosts(client) {
+                try {
+                    const { data: blogPosts } = await client.from('posts').select('*').order('created_at', { ascending: false });
+                    setPosts(blogPosts || []);
+                } catch (error) {
+                    console.error('Error loading posts:', error);
+                }
+            }
+
+            async function loadComments(postId) {
+                if (DEMO_MODE) {
+                    setComments([]);
+                    return;
+                }
+                try {
+                    const { data } = await supabase
+                        .from('comments')
+                        .select('*')
+                        .eq('post_id', postId)
+                        .order('created_at', { ascending: true });
+                    setComments(data || []);
+                } catch (error) {
+                    console.error('Error loading comments:', error);
+                }
+            }
+
+            async function handleCommentSubmit(e, postId) {
+                e.preventDefault();
+                if (!newComment.name.trim() || !newComment.comment.trim()) {
+                    alert('Please fill in both name and comment');
+                    return;
+                }
+
+                if (DEMO_MODE) {
+                    alert('Connect to Supabase to enable comments!');
+                    return;
+                }
+
+                try {
+                    const { error } = await supabase.from('comments').insert([{
+                        post_id: postId,
+                        name: newComment.name,
+                        comment: newComment.comment
+                    }]);
+                    
+                    if (!error) {
+                        setNewComment({ name: '', comment: '' });
+                        loadComments(postId);
+                    }
+                } catch (error) {
+                    console.error('Error adding comment:', error);
+                    alert('Error adding comment. Please try again.');
+                }
+            }
+
+            useEffect(() => {
+                if (selectedPost && !DEMO_MODE) {
+                    loadComments(selectedPost.id);
+                }
+            }, [selectedPost]);
+
+            async function searchMusicBrainz(query) {
+                const url = `https://musicbrainz.org/ws/2/artist/?query=${encodeURIComponent(query)}&fmt=json&limit=5`;
+                const response = await fetch(url, { headers: { 'User-Agent': 'MusicHistoryDB/1.0' } });
+                if (!response.ok) throw new Error('Search failed');
+                const data = await response.json();
+                return data.artists || [];
+            }
+
+            async function getArtistDetails(mbid) {
+                const url = `https://musicbrainz.org/ws/2/artist/${mbid}?inc=tags+genres&fmt=json`;
+                const response = await fetch(url, { headers: { 'User-Agent': 'MusicHistoryDB/1.0' } });
+                if (!response.ok) return null;
+                return await response.json();
+            }
+
+            function formatArtistData(artist, details) {
+                const area = artist.area?.name || artist['begin-area']?.name || 'Unknown';
+                const country = artist.country || '';
+                const origin = country ? `${area}, ${country}` : area;
+                const lifeSpan = artist['life-span'] || {};
+                const formedDate = lifeSpan.begin ? lifeSpan.begin.split('-')[0] : 'Unknown';
+                let genres = [];
+                if (details?.genres) genres = details.genres.map(g => g.name);
+                else if (details?.tags) genres = details.tags.slice(0,3).map(t => t.name);
+                else if (artist.tags) genres = artist.tags.slice(0,3).map(t => t.name);
+                const genreString = genres.join(', ') || 'Various';
+                const type = artist.type || 'Artist';
+                const disambiguation = artist.disambiguation ? ` (${artist.disambiguation})` : '';
+                let description = `${type} from ${origin}${disambiguation}.`;
+                if (lifeSpan.ended) {
+                    description += ` Active from ${formedDate} to ${lifeSpan.ended.split('-')[0]}.`;
+                } else if (formedDate !== 'Unknown') {
+                    description += ` Active since ${formedDate}.`;
+                }
+                return { id: artist.id, name: artist.name, origin, formed_date: formedDate, genre: genreString, description };
+            }
+
+            async function handleImportSearch() {
+                if (!importSearch.trim()) return;
+                setImporting(true);
+                setImportResults([]);
+                try {
+                    const artists = await searchMusicBrainz(importSearch);
+                    const formattedResults = await Promise.all(
+                        artists.map(async (artist) => {
+                            const details = await getArtistDetails(artist.id);
+                            return formatArtistData(artist, details);
+                        })
+                    );
+                    setImportResults(formattedResults);
+                } catch (error) {
+                    console.error('Import search error:', error);
+                    alert('Search failed. Please try again.');
+                } finally {
+                    setImporting(false);
+                }
+            }
+
+            async function importArtist(artistData, index) {
+                const name = document.getElementById(`import-name-${index}`).value;
+                const origin = document.getElementById(`import-origin-${index}`).value;
+                const formed = document.getElementById(`import-formed-${index}`).value;
+                const genre = document.getElementById(`import-genre-${index}`).value;
+                const desc = document.getElementById(`import-desc-${index}`).value;
+                try {
+                    const { error } = await supabase.from('artists').insert([{
+                        name, origin, formed_date: formed, genre, description: desc
+                    }]);
+                    if (error) throw error;
+                    loadData(supabase);
+                    const statusEl = document.getElementById(`import-status-${index}`);
+                    statusEl.className = 'import-status import-success';
+                    statusEl.textContent = '✅ Successfully imported!';
+                } catch (error) {
+                    console.error('Import error:', error);
+                    const statusEl = document.getElementById(`import-status-${index}`);
+                    statusEl.className = 'import-status import-error';
+                    statusEl.textContent = `❌ Error: ${error.message}`;
+                }
+            }
+
+            function openAddModal(type) {
+                setModalType(type);
+                setEditingPost(null);
+                setShowModal(true);
+            }
+
+            function openEditModal(post) {
+                setModalType('post');
+                setEditingPost(post);
+                setShowModal(true);
+            }
+
+            async function handleSubmit(e) {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+                if (DEMO_MODE) {
+                    if (modalType === 'post') {
+                        if (editingPost) {
+                            setPosts(posts.map(p => p.id === editingPost.id ? { ...p, ...data, status: submitAction } : p));
+                        } else {
+                            const newPost = { id: Date.now(), ...data, slug: data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'), created_at: new Date().toISOString(), author: 'You', status: submitAction };
+                            setPosts([newPost, ...posts]);
+                        }
+                    } else {
+                        const newItem = { id: Date.now(), type: modalType, ...data };
+                        setItems([...items, newItem]);
+                    }
+                    setShowModal(false);
+                    setEditingPost(null);
+                    e.target.reset();
+                } else {
+                    if (modalType === 'post') {
+                        let cover_image_url = editingPost ? editingPost.cover_image_url : null;
+                        const imageInput = document.getElementById('cover-image-input');
+                        const imageFile = imageInput && imageInput.files[0];
+                        if (imageFile) {
+                            const fileName = `${Date.now()}-${imageFile.name.replace(/[^a-z0-9.]/gi, '-')}`;
+                            const { error: uploadError } = await supabase.storage.from('blog-images').upload(fileName, imageFile, { upsert: false });
+                            if (!uploadError) {
+                                const { data: urlData } = supabase.storage.from('blog-images').getPublicUrl(fileName);
+                                cover_image_url = urlData.publicUrl;
+                            }
+                        }
+                        if (editingPost) {
+                            const { error } = await supabase.from('posts').update({ ...data, status: submitAction, ...(cover_image_url && { cover_image_url }) }).eq('id', editingPost.id);
+                            if (!error) { loadPosts(supabase); setShowModal(false); setEditingPost(null); e.target.reset(); if (imageInput) imageInput.value = ''; }
+                        } else {
+                            const { error } = await supabase.from('posts').insert([{ ...data, slug: data.title.toLowerCase().replace(/[^a-z0-9]+/g, '-'), author: 'You', status: submitAction, ...(cover_image_url && { cover_image_url }) }]);
+                            if (!error) { loadPosts(supabase); setShowModal(false); e.target.reset(); if (imageInput) imageInput.value = ''; }
+                        }
+                    } else {
+                        const tableName = modalType === 'artist' ? 'artists' : modalType === 'album' ? 'albums' : 'genres';
+                        const { error } = await supabase.from(tableName).insert([data]);
+                        if (!error) { loadData(supabase); setShowModal(false); e.target.reset(); }
+                    }
+                }
+            }
+
+            const filteredItems = items.filter(item => {
+                const matchesFilter = activeFilter === 'all' || item.type === activeFilter;
+                const matchesSearch = !searchQuery || JSON.stringify(item).toLowerCase().includes(searchQuery.toLowerCase());
+                return matchesFilter && matchesSearch;
+            });
+
+            const filteredPosts = posts.filter(post => {
+                const isVisible = adminView || !post.status || post.status === 'published';
+                return isVisible && (!searchQuery || post.title.toLowerCase().includes(searchQuery.toLowerCase()) || post.content.toLowerCase().includes(searchQuery.toLowerCase()) || post.category.toLowerCase().includes(searchQuery.toLowerCase()));
+            });
+
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            }
+
+            function renderContent(text) {
+                if (!text) return '';
+                const lines = text.split('\n');
+                let html = '';
+                for (let line of lines) {
+                    if (line.startsWith('**') && line.endsWith('**')) {
+                        html += `<h3>${line.slice(2, -2)}</h3>`;
+                    } else if (line.trim() === '') {
+                        html += '<p>&nbsp;</p>';
+                    } else {
+                        line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                        line = line.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                        html += `<p>${line}</p>`;
+                    }
+                }
+                return html;
+            }
+
+            function handlePasswordSubmit() {
+                if (passwordInput === 'KIEKEEMMM26!!') {
+                    setIsAdmin(true);
+                    setShowPasswordPrompt(false);
+                    setPasswordInput('');
+                    setPasswordError(false);
+                } else {
+                    setPasswordError(true);
+                    setPasswordInput('');
+                }
+            }
+
+            return (
+                <>
+                    <div className="container">
+                        <header>
+                            <h1 onClick={() => !isAdmin && setShowPasswordPrompt(true)} style={{ cursor: isAdmin ? 'default' : 'pointer' }}>MyMindonMusic</h1>
+                            <p className="subtitle">Random Musings & Extreme Rambling</p>
+                        </header>
+
+                        <div className="main-nav">
+                            <button className={`nav-button ${currentView === 'database' ? 'active' : ''}`} onClick={() => { setCurrentView('database'); setSelectedPost(null); }}>
+                                <span>My Collection</span>
+                            </button>
+                            <button className={`nav-button ${currentView === 'blog' ? 'active' : ''}`} onClick={() => { setCurrentView('blog'); setSelectedPost(null); }}>
+                                <span>My Somewhat Coherent Thoughts</span>
+                            </button>
+                            <button className="nav-button import" onClick={() => setShowImportModal(true)}>
+                                <span>Add Your Shit Too</span>
+                            </button>
+                        </div>
+
+                        {currentView === 'database' && (
+                            <>
+                                <div className="search-section">
+                                    <input type="text" className="search-bar" placeholder="Search artists, albums, genres..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+                                    <div className="filter-tabs">
+                                        <button className={`tab ${activeFilter === 'all' ? 'active' : ''}`} onClick={() => setActiveFilter('all')}>All</button>
+                                        <button className={`tab ${activeFilter === 'artist' ? 'active' : ''}`} onClick={() => setActiveFilter('artist')}>Artists</button>
+                                        <button className={`tab ${activeFilter === 'album' ? 'active' : ''}`} onClick={() => setActiveFilter('album')}>Albums</button>
+                                        <button className={`tab ${activeFilter === 'genre' ? 'active' : ''}`} onClick={() => setActiveFilter('genre')}>Genres</button>
+                                    </div>
+                                </div>
+                                <div className="results-grid">
+                                    {filteredItems.length > 0 ? filteredItems.map(item => (
+                                        <div key={item.id} className="card">
+                                            <div className="card-type">{item.type}</div>
+                                            <h3 className="card-title">{item.name || item.title}</h3>
+                                            <div className="card-meta">
+                                                {item.type === 'artist' && `${item.origin} • ${item.formed_date}`}
+                                                {item.type === 'album' && `${item.artist} • ${item.release_date}`}
+                                                {item.type === 'genre' && `${item.era} • ${item.origin}`}
+                                            </div>
+                                            <p className="card-description">{item.description}</p>
+                                        </div>
+                                    )) : (
+                                        <div className="empty-state">
+                                            <h3>No results found</h3>
+                                            <p>Try adjusting your search or filters</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
+
+                        {currentView === 'blog' && !selectedPost && (
+                            <>
+                                <div className="search-section" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                    <input type="text" className="search-bar" placeholder="Search blog posts..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ flex: 1 }} />
+                                    {isAdmin && <button onClick={() => setAdminView(!adminView)} style={{ whiteSpace: 'nowrap', background: adminView ? 'rgba(255,200,0,0.15)' : 'none', border: `1px solid ${adminView ? '#ffc800' : 'rgba(255,255,255,0.3)'}`, borderRadius: '6px', color: adminView ? '#ffc800' : 'inherit', padding: '8px 14px', cursor: 'pointer', fontSize: '0.8rem' }}>
+                                        {adminView ? '👁 My Posts' : '👁 Public View'}
+                                    </button>}
+                                </div>
+                                <div className="results-grid">
+                                    {filteredPosts.length > 0 ? filteredPosts.map(post => (
+                                        <div key={post.id} className="card" style={{ position: 'relative' }}>
+                                            <div style={{ position: 'absolute', top: '12px', right: '12px' }}>
+                                                {isAdmin && <button onClick={(e) => { e.stopPropagation(); openEditModal(post); }} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '4px', color: 'inherit', padding: '2px 8px', cursor: 'pointer', fontSize: '0.75rem' }}>Edit</button>}
+                                            </div>
+                                            <div className="card-type" onClick={() => setSelectedPost(post)}>
+                                                <span className="category-badge">{post.category}</span>
+                                                {post.status === 'draft' && <span style={{ marginLeft: '6px', background: 'rgba(255,200,0,0.2)', color: '#ffc800', border: '1px solid #ffc800', borderRadius: '4px', padding: '1px 6px', fontSize: '0.7rem', textTransform: 'uppercase' }}>Draft</span>}
+                                                {post.status === 'private' && <span style={{ marginLeft: '6px', background: 'rgba(255,80,80,0.2)', color: '#ff5050', border: '1px solid #ff5050', borderRadius: '4px', padding: '1px 6px', fontSize: '0.7rem', textTransform: 'uppercase' }}>Private</span>}
+                                            </div>
+                                            <h3 className="card-title" onClick={() => setSelectedPost(post)}>{post.title}</h3>
+                                            <div className="card-meta" onClick={() => setSelectedPost(post)}>{formatDate(post.created_at)} • {post.author}</div>
+                                            <p className="card-description" onClick={() => setSelectedPost(post)}>{post.content.substring(0, 150)}...</p>
+                                        </div>
+                                    )) : (
+                                        <div className="empty-state">
+                                            <h3>No blog posts yet</h3>
+                                            <p>Click the + button to write your first post!</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
+                        )}
+
+                        {currentView === 'blog' && selectedPost && (
+                            <div className="blog-post-full">
+                                <button className="back-button" onClick={() => setSelectedPost(null)}>← Back</button>
+                                {isAdmin && <button onClick={() => { openEditModal(selectedPost); }} style={{ float: 'right', background: 'none', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '6px', color: 'inherit', padding: '6px 14px', cursor: 'pointer', fontSize: '0.85rem' }}>✏️ Edit Post</button>}
+                                <h2>{selectedPost.title}</h2>
+                                <div className="blog-meta">
+                                    <div className="blog-meta-item"><span className="category-badge">{selectedPost.category}</span></div>
+                                    <div className="blog-meta-item">{formatDate(selectedPost.created_at)}</div>
+                                    <div className="blog-meta-item">By {selectedPost.author}</div>
+                                </div>
+                                {selectedPost.cover_image_url && (
+                                    <img src={selectedPost.cover_image_url} alt={selectedPost.title} style={{ width: '100%', maxHeight: '400px', objectFit: 'cover', borderRadius: '8px', marginBottom: '1.5rem' }} />
+                                )}
+                                <div className="blog-content" dangerouslySetInnerHTML={{ __html: renderContent(selectedPost.content) }} />
+                                
+                                {/* Comments Section */}
+                                <div className="comments-section">
+                                    <h3 className="comments-title">Comments ({comments.length})</h3>
+                                    
+                                    <div className="comment-form">
+                                        <form onSubmit={(e) => handleCommentSubmit(e, selectedPost.id)}>
+                                            <div className="comment-input-group">
+                                                <label>Your Name</label>
+                                                <input 
+                                                    type="text" 
+                                                    className="comment-input"
+                                                    value={newComment.name}
+                                                    onChange={(e) => setNewComment({...newComment, name: e.target.value})}
+                                                    placeholder="Enter your name..."
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="comment-input-group">
+                                                <label>Comment</label>
+                                                <textarea 
+                                                    className="comment-textarea"
+                                                    value={newComment.comment}
+                                                    onChange={(e) => setNewComment({...newComment, comment: e.target.value})}
+                                                    placeholder="Share your thoughts..."
+                                                    required
+                                                />
+                                            </div>
+                                            <button type="submit" className="comment-submit">
+                                                Post Comment
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    {comments.length > 0 && (
+                                        <div className="comments-list">
+                                            {comments.map((comment) => (
+                                                <div key={comment.id} className="comment">
+                                                    <div className="comment-author">{comment.name}</div>
+                                                    <div className="comment-date">{formatDate(comment.created_at)}</div>
+                                                    <div className="comment-text">{comment.comment}</div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {isAdmin && <button className="add-button" onClick={() => openAddModal(currentView === 'blog' ? 'post' : 'artist')}>+</button>}
+
+                    {showModal && (
+                        <div className="modal-overlay" onClick={() => setShowModal(false)}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()}>
+                                <h2>{modalType === 'post' ? (editingPost ? 'Edit Post' : 'Write New Post') : `Add ${modalType}`}</h2>
+                                <form onSubmit={handleSubmit}>
+                                    {modalType === 'post' && (
+                                        <>
+                                            <div className="form-group"><label>Title</label><input type="text" name="title" required defaultValue={editingPost ? editingPost.title : ''} key={editingPost ? editingPost.id + '-title' : 'new-title'} /></div>
+                                            <div className="form-group"><label>Category</label>
+                                                <select name="category" required defaultValue={editingPost ? editingPost.category : 'What I\'m Listening To'} key={editingPost ? editingPost.id + '-cat' : 'new-cat'}>
+                                                    <option value="What I'm Listening To">What I'm Listening To</option>
+                                                    <option value="Pure Speculation">Pure Speculation</option>
+                                                    <option value="Live & Direct">Live & Direct</option>
+                                                    <option value="Random AF">Random AF</option>
+                                                </select>
+                                            </div>
+                                            <div className="form-group"><label>Cover Image (optional)</label><input type="file" id="cover-image-input" accept="image/*" /></div>
+                                            <div className="formatting-help"><strong>Formatting:</strong> Use **text** for headings (on own line), *text* for italic, **text** for bold (inline).</div>
+                                            <div className="form-group"><label>Content</label><textarea name="content" className="tall" required defaultValue={editingPost ? editingPost.content : ''} key={editingPost ? editingPost.id + '-content' : 'new-content'}></textarea></div>
+                                        </>
+                                    )}
+                                    {modalType === 'artist' && (
+                                        <>
+                                            <div className="form-group"><label>Name</label><input type="text" name="name" required /></div>
+                                            <div className="form-group"><label>Origin</label><input type="text" name="origin" required /></div>
+                                            <div className="form-group"><label>Year Formed</label><input type="text" name="formed_date" required /></div>
+                                            <div className="form-group"><label>Genre</label><input type="text" name="genre" required /></div>
+                                            <div className="form-group"><label>Description</label><textarea name="description" required></textarea></div>
+                                        </>
+                                    )}
+                                    {modalType === 'album' && (
+                                        <>
+                                            <div className="form-group"><label>Title</label><input type="text" name="title" required /></div>
+                                            <div className="form-group"><label>Artist</label><input type="text" name="artist" required /></div>
+                                            <div className="form-group"><label>Release Date</label><input type="text" name="release_date" required /></div>
+                                            <div className="form-group"><label>Genre</label><input type="text" name="genre" required /></div>
+                                            <div className="form-group"><label>Description</label><textarea name="description" required></textarea></div>
+                                        </>
+                                    )}
+                                    {modalType === 'genre' && (
+                                        <>
+                                            <div className="form-group"><label>Name</label><input type="text" name="name" required /></div>
+                                            <div className="form-group"><label>Era</label><input type="text" name="era" required /></div>
+                                            <div className="form-group"><label>Origin</label><input type="text" name="origin" required /></div>
+                                            <div className="form-group"><label>Description</label><textarea name="description" required></textarea></div>
+                                        </>
+                                    )}
+                                    <div className="button-group">
+                                        <button type="button" className="btn btn-secondary" onClick={() => { setShowModal(false); setEditingPost(null); }}>Cancel</button>
+                                        {modalType === 'post' ? (
+                                            <>
+                                                <button type="submit" className="btn btn-secondary" onClick={() => setSubmitAction('draft')}>Save Draft</button>
+                                                <button type="submit" className="btn btn-secondary" onClick={() => setSubmitAction('private')}>Save Private</button>
+                                                <button type="submit" className="btn btn-primary" onClick={() => setSubmitAction('published')}>Publish</button>
+                                            </>
+                                        ) : (
+                                            <button type="submit" className="btn btn-primary">{`Add ${modalType}`}</button>
+                                        )}
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {showImportModal && (
+                        <div className="modal-overlay" onClick={() => setShowImportModal(false)}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()}>
+                                <h2>Import Artists</h2>
+                                <div className="form-group">
+                                    <label>Search for Artist</label>
+                                    <input type="text" className="search-bar" placeholder="e.g., Miles Davis..." value={importSearch} onChange={(e) => setImportSearch(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleImportSearch()} />
+                                </div>
+                                <button className="btn btn-primary" onClick={handleImportSearch} disabled={importing} style={{width: '100%', marginBottom: '2rem'}}>
+                                    {importing ? 'Searching...' : 'Search MusicBrainz'}
+                                </button>
+                                {importResults.length > 0 && (
+                                    <div>
+                                        <h3 style={{fontFamily: 'Syne, sans-serif', fontSize: '1.8rem', marginBottom: '1rem'}}>Results ({importResults.length})</h3>
+                                        {importResults.map((artist, index) => (
+                                            <div key={index} className="import-result-card">
+                                                <h3>{artist.name}</h3>
+                                                <div className="import-preview">
+                                                    <div className="import-field">
+                                                        <label className="import-label">Origin</label>
+                                                        <input id={`import-origin-${index}`} className="import-input" defaultValue={artist.origin} />
+                                                    </div>
+                                                    <div className="import-field">
+                                                        <label className="import-label">Year</label>
+                                                        <input id={`import-formed-${index}`} className="import-input" defaultValue={artist.formed_date} />
+                                                    </div>
+                                                    <div className="import-field">
+                                                        <label className="import-label">Genre</label>
+                                                        <input id={`import-genre-${index}`} className="import-input" defaultValue={artist.genre} />
+                                                    </div>
+                                                    <div className="import-field">
+                                                        <label className="import-label">Description</label>
+                                                        <textarea id={`import-desc-${index}`} className="import-textarea" defaultValue={artist.description} />
+                                                    </div>
+                                                    <input type="hidden" id={`import-name-${index}`} value={artist.name} />
+                                                </div>
+                                                <button className="btn btn-primary" onClick={() => importArtist(artist, index)} style={{width: '100%'}}>
+                                                    Import to Database
+                                                </button>
+                                                <div id={`import-status-${index}`} className="import-status"></div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                                <button className="btn btn-secondary" onClick={() => { setShowImportModal(false); setImportResults([]); setImportSearch(''); }} style={{width: '100%', marginTop: '1rem'}}>
+                                    Close
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                    {showPasswordPrompt && (
+                        <div className="modal-overlay" onClick={() => { setShowPasswordPrompt(false); setPasswordInput(''); setPasswordError(false); }}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '360px' }}>
+                                <h2>Admin Access</h2>
+                                <div className="form-group">
+                                    <label>Password</label>
+                                    <input
+                                        type="password"
+                                        value={passwordInput}
+                                        onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
+                                        onKeyPress={(e) => e.key === 'Enter' && handlePasswordSubmit()}
+                                        autoFocus
+                                        placeholder="Enter password..."
+                                    />
+                                    {passwordError && <p style={{ color: '#ff5050', fontSize: '0.8rem', marginTop: '0.5rem' }}>Incorrect password, try again.</p>}
+                                </div>
+                                <div className="button-group">
+                                    <button className="btn btn-secondary" onClick={() => { setShowPasswordPrompt(false); setPasswordInput(''); setPasswordError(false); }}>Cancel</button>
+                                    <button className="btn btn-primary" onClick={handlePasswordSubmit}>Enter</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </>
+            );
+        }
+
+        ReactDOM.render(<MusicHistoryApp />, document.getElementById('root'));
+    </script>
+</body>
+</html>
