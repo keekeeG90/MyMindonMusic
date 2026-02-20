@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v5 -->
+<!-- v9 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -894,6 +894,7 @@
             const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
             const [passwordInput, setPasswordInput] = useState('');
             const [passwordError, setPasswordError] = useState(false);
+            const [insertingImage, setInsertingImage] = useState(false);
 
             const demoData = [{
                 id: 1, type: 'artist', name: 'The Beatles', origin: 'Liverpool, England',
@@ -1089,10 +1090,45 @@
                 setShowModal(true);
             }
 
+            async function handleSubmitWithAction(action) {
+                const titleEl = document.getElementById('post-title-input');
+                const categoryEl = document.querySelector('#post-modal-form select[name="category"]');
+                const contentEl = document.getElementById('post-content-textarea');
+                const title = titleEl ? titleEl.value.trim() : '';
+                const category = categoryEl ? categoryEl.value : '';
+                const content = contentEl ? contentEl.value.trim() : '';
+                if (!title) { alert('Please enter a title.'); return; }
+                if (!content) { alert('Please enter some content.'); return; }
+                const data = { title, category, content };
+                if (DEMO_MODE) {
+                    if (editingPost) {
+                        setPosts(posts.map(p => p.id === editingPost.id ? { ...p, ...data, status: action } : p));
+                    } else {
+                        const newPost = { id: Date.now(), ...data, slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'), created_at: new Date().toISOString(), author: 'You', status: action };
+                        setPosts([newPost, ...posts]);
+                    }
+                    setShowModal(false);
+                    setEditingPost(null);
+                } else {
+                    if (editingPost) {
+                        const { error } = await supabase.from('posts').update({ ...data, status: action }).eq('id', editingPost.id);
+                        if (!error) { loadPosts(supabase); setShowModal(false); setEditingPost(null); }
+                        else { alert('Save failed: ' + error.message); }
+                    } else {
+                        const { error } = await supabase.from('posts').insert([{ ...data, slug: title.toLowerCase().replace(/[^a-z0-9]+/g, '-'), author: 'You', status: action }]);
+                        if (!error) { loadPosts(supabase); setShowModal(false); }
+                        else { alert('Save failed: ' + error.message); }
+                    }
+                }
+            }
+
             async function handleSubmit(e) {
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 const data = Object.fromEntries(formData.entries());
+                // Always read content directly from textarea to capture inline image tags
+                const contentTextarea = document.getElementById('post-content-textarea');
+                if (contentTextarea) data.content = contentTextarea.value;
                 if (DEMO_MODE) {
                     if (modalType === 'post') {
                         if (editingPost) {
@@ -1157,7 +1193,10 @@
                 const lines = text.split('\n');
                 let html = '';
                 for (let line of lines) {
-                    if (line.startsWith('**') && line.endsWith('**')) {
+                    if (line.startsWith('[image:') && line.endsWith(']')) {
+                        const url = line.slice(7, -1);
+                        html += `<img src="${url}" alt="Post image" style="width:100%;max-height:500px;object-fit:cover;border-radius:8px;margin:1rem 0;" />`;
+                    } else if (line.startsWith('**') && line.endsWith('**')) {
                         html += `<h3>${line.slice(2, -2)}</h3>`;
                     } else if (line.trim() === '') {
                         html += '<p>&nbsp;</p>';
@@ -1179,6 +1218,33 @@
                 } else {
                     setPasswordError(true);
                     setPasswordInput('');
+                }
+            }
+
+            async function insertImage(e) {
+                const file = e.target.files[0];
+                if (!file || !supabase) return;
+                setInsertingImage(true);
+                try {
+                    const fileName = `${Date.now()}-${file.name.replace(/[^a-z0-9.]/gi, '-')}`;
+                    const { error: uploadError } = await supabase.storage.from('blog-images').upload(fileName, file, { upsert: false });
+                    if (uploadError) { alert('Image upload failed: ' + uploadError.message); return; }
+                    const { data: urlData } = supabase.storage.from('blog-images').getPublicUrl(fileName);
+                    const url = urlData.publicUrl;
+                    const textarea = document.getElementById('post-content-textarea');
+                    if (textarea) {
+                        const start = textarea.selectionStart || textarea.value.length;
+                        const current = textarea.value;
+                        const tag = `\n[image:${url}]\n`;
+                        const newValue = current.slice(0, start) + tag + current.slice(start);
+                        textarea.value = newValue;
+                        textarea.focus();
+                    }
+                } catch(err) {
+                    alert('Upload error: ' + err.message);
+                } finally {
+                    setInsertingImage(false);
+                    e.target.value = '';
                 }
             }
 
@@ -1338,10 +1404,10 @@
                         <div className="modal-overlay" onClick={() => setShowModal(false)}>
                             <div className="modal" onClick={(e) => e.stopPropagation()}>
                                 <h2>{modalType === 'post' ? (editingPost ? 'Edit Post' : 'Write New Post') : `Add ${modalType}`}</h2>
-                                <form onSubmit={handleSubmit}>
+                                <form id="post-modal-form" onSubmit={(e) => e.preventDefault()}>
                                     {modalType === 'post' && (
                                         <>
-                                            <div className="form-group"><label>Title</label><input type="text" name="title" required defaultValue={editingPost ? editingPost.title : ''} key={editingPost ? editingPost.id + '-title' : 'new-title'} /></div>
+                                            <div className="form-group"><label>Title</label><input type="text" name="title" id="post-title-input" defaultValue={editingPost ? editingPost.title : ''} key={editingPost ? editingPost.id + '-title' : 'new-title'} /></div>
                                             <div className="form-group"><label>Category</label>
                                                 <select name="category" required defaultValue={editingPost ? editingPost.category : 'What I\'m Listening To'} key={editingPost ? editingPost.id + '-cat' : 'new-cat'}>
                                                     <option value="What I'm Listening To">What I'm Listening To</option>
@@ -1350,9 +1416,17 @@
                                                     <option value="Random AF">Random AF</option>
                                                 </select>
                                             </div>
-                                            <div className="form-group"><label>Cover Image (optional)</label><input type="file" id="cover-image-input" accept="image/*" /></div>
-                                            <div className="formatting-help"><strong>Formatting:</strong> Use **text** for headings (on own line), *text* for italic, **text** for bold (inline).</div>
-                                            <div className="form-group"><label>Content</label><textarea name="content" className="tall" required defaultValue={editingPost ? editingPost.content : ''} key={editingPost ? editingPost.id + '-content' : 'new-content'}></textarea></div>
+                                            <div className="formatting-help"><strong>Formatting:</strong> Use **text** for headings, *text* for italic, **text** for bold. Click "Insert Image" to add images inline.</div>
+                                            <div className="form-group">
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                                    <label style={{ margin: 0 }}>Content</label>
+                                                    <label style={{ cursor: insertingImage ? 'not-allowed' : 'pointer', background: 'none', border: '1px solid rgba(255,255,255,0.3)', borderRadius: '4px', color: 'inherit', padding: '3px 10px', fontSize: '0.8rem', opacity: insertingImage ? 0.5 : 1 }}>
+                                                        {insertingImage ? '⏳ Uploading...' : '📷 Insert Image'}
+                                                        <input type="file" accept="image/*" onChange={insertImage} style={{ display: 'none' }} disabled={insertingImage} />
+                                                    </label>
+                                                </div>
+                                                <textarea id="post-content-textarea" name="content" className="tall" defaultValue={editingPost ? editingPost.content : ''} key={editingPost ? editingPost.id + '-content' : 'new-content'}></textarea>
+                                            </div>
                                         </>
                                     )}
                                     {modalType === 'artist' && (
@@ -1385,9 +1459,9 @@
                                         <button type="button" className="btn btn-secondary" onClick={() => { setShowModal(false); setEditingPost(null); }}>Cancel</button>
                                         {modalType === 'post' ? (
                                             <>
-                                                <button type="submit" className="btn btn-secondary" onClick={() => setSubmitAction('draft')}>Save Draft</button>
-                                                <button type="submit" className="btn btn-secondary" onClick={() => setSubmitAction('private')}>Save Private</button>
-                                                <button type="submit" className="btn btn-primary" onClick={() => setSubmitAction('published')}>Publish</button>
+                                                <button type="button" className="btn btn-secondary" onClick={() => handleSubmitWithAction('draft')}>Save Draft</button>
+                                                <button type="button" className="btn btn-secondary" onClick={() => handleSubmitWithAction('private')}>Save Private</button>
+                                                <button type="button" className="btn btn-primary" onClick={() => handleSubmitWithAction('published')}>Publish</button>
                                             </>
                                         ) : (
                                             <button type="submit" className="btn btn-primary">{`Add ${modalType}`}</button>
