@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v9 -->
+<!-- v10 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -1193,17 +1193,18 @@
                 const lines = text.split('\n');
                 let html = '';
                 for (let line of lines) {
-                    if (line.startsWith('[image:') && line.endsWith(']')) {
-                        const url = line.slice(7, -1);
+                    const trimmed = line.trim();
+                    if (trimmed.startsWith('[image:') && trimmed.endsWith(']')) {
+                        const url = trimmed.slice(7, -1);
                         html += `<img src="${url}" alt="Post image" style="width:100%;max-height:500px;object-fit:cover;border-radius:8px;margin:1rem 0;" />`;
-                    } else if (line.startsWith('**') && line.endsWith('**')) {
-                        html += `<h3>${line.slice(2, -2)}</h3>`;
-                    } else if (line.trim() === '') {
+                    } else if (trimmed.startsWith('**') && trimmed.endsWith('**') && !trimmed.includes(' ')) {
+                        html += `<h3>${trimmed.slice(2, -2)}</h3>`;
+                    } else if (trimmed === '') {
                         html += '<p>&nbsp;</p>';
                     } else {
-                        line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-                        line = line.replace(/\*(.*?)\*/g, '<em>$1</em>');
-                        html += `<p>${line}</p>`;
+                        let processedLine = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                        processedLine = processedLine.replace(/\*(.*?)\*/g, '<em>$1</em>');
+                        html += `<p>${processedLine}</p>`;
                     }
                 }
                 return html;
