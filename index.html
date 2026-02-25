@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- v10 -->
+<!-- v11 -->
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -895,6 +895,9 @@
             const [passwordInput, setPasswordInput] = useState('');
             const [passwordError, setPasswordError] = useState(false);
             const [insertingImage, setInsertingImage] = useState(false);
+            const [showTinfoilPosts, setShowTinfoilPosts] = useState(false);
+            const [hasSeenTinfoilWarning, setHasSeenTinfoilWarning] = useState(false);
+            const [showTinfoilWarning, setShowTinfoilWarning] = useState(false);
 
             const demoData = [{
                 id: 1, type: 'artist', name: 'The Beatles', origin: 'Liverpool, England',
@@ -1180,7 +1183,9 @@
 
             const filteredPosts = posts.filter(post => {
                 const isVisible = adminView || !post.status || post.status === 'published';
-                return isVisible && (!searchQuery || post.title.toLowerCase().includes(searchQuery.toLowerCase()) || post.content.toLowerCase().includes(searchQuery.toLowerCase()) || post.category.toLowerCase().includes(searchQuery.toLowerCase()));
+                const isSpeculation = post.category === 'Pure Speculation';
+                const shouldShow = isVisible && (!isSpeculation || showTinfoilPosts || adminView);
+                return shouldShow && (!searchQuery || post.title.toLowerCase().includes(searchQuery.toLowerCase()) || post.content.toLowerCase().includes(searchQuery.toLowerCase()) || post.category.toLowerCase().includes(searchQuery.toLowerCase()));
             });
 
             function formatDate(dateString) {
@@ -1208,6 +1213,20 @@
                     }
                 }
                 return html;
+            }
+
+            function handleTinfoilToggle() {
+                if (!hasSeenTinfoilWarning && !showTinfoilPosts) {
+                    setShowTinfoilWarning(true);
+                } else {
+                    setShowTinfoilPosts(!showTinfoilPosts);
+                }
+            }
+
+            function confirmTinfoilWarning() {
+                setHasSeenTinfoilWarning(true);
+                setShowTinfoilPosts(true);
+                setShowTinfoilWarning(false);
             }
 
             function handlePasswordSubmit() {
@@ -1304,8 +1323,11 @@
 
                         {currentView === 'blog' && !selectedPost && (
                             <>
-                                <div className="search-section" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                                    <input type="text" className="search-bar" placeholder="Search blog posts..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ flex: 1 }} />
+                                <div className="search-section" style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                    <input type="text" className="search-bar" placeholder="Search blog posts..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} style={{ flex: 1, minWidth: '200px' }} />
+                                    <button onClick={handleTinfoilToggle} style={{ whiteSpace: 'nowrap', background: showTinfoilPosts ? 'rgba(255,100,255,0.15)' : 'none', border: `1px solid ${showTinfoilPosts ? '#ff64ff' : 'rgba(255,255,255,0.3)'}`, borderRadius: '6px', color: showTinfoilPosts ? '#ff64ff' : 'inherit', padding: '8px 14px', cursor: 'pointer', fontSize: '0.8rem' }}>
+                                        🎩 Do you happen to own a tinfoil hat?
+                                    </button>
                                     {isAdmin && <button onClick={() => setAdminView(!adminView)} style={{ whiteSpace: 'nowrap', background: adminView ? 'rgba(255,200,0,0.15)' : 'none', border: `1px solid ${adminView ? '#ffc800' : 'rgba(255,255,255,0.3)'}`, borderRadius: '6px', color: adminView ? '#ffc800' : 'inherit', padding: '8px 14px', cursor: 'pointer', fontSize: '0.8rem' }}>
                                         {adminView ? '👁 My Posts' : '👁 Public View'}
                                     </button>}
@@ -1523,6 +1545,22 @@
                             </div>
                         </div>
                     )}
+                    {showTinfoilWarning && (
+                        <div className="modal-overlay" onClick={() => setShowTinfoilWarning(false)}>
+                            <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+                                <h2>Pure Speculation</h2>
+                                <p style={{ lineHeight: '1.6', marginBottom: '1.5rem' }}>
+                                    This section is called Pure Speculation and it's just that. I don't know these people I'm just in their business. I occasionally find topics interesting and want to look further into them. I don't have any answers, just questions really. Seriously, it's all speculation on my part. I may be 100% or 100% wrong. Feel free to add to the conversation, share your thoughts, correct me if need be. Just keep it respectful either way.
+                                </p>
+                                <div className="button-group">
+                                    <button className="btn btn-primary" onClick={confirmTinfoilWarning} style={{ width: '100%' }}>
+                                        So you do, hope it's strapped on tight
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {showPasswordPrompt && (
                         <div className="modal-overlay" onClick={() => { setShowPasswordPrompt(false); setPasswordInput(''); setPasswordError(false); }}>
                             <div className="modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '360px' }}>
